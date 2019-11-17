@@ -9,14 +9,18 @@ Example configuration file in JSON format
     {
         "type": "local",        
         "target": "/path/to/target/dir1",
-        "destination": "/path/to/destination/dir1"
+        "destination": "/path/to/destination/dir1",
+        "local_username": "LOCAL_USERNAME",
+        "remove_after_umount": true
     }, {
         "type": "ssh",
         "username": "USERNAME",
         "password": "PASSWORD",
         "host": "HOST",
         "target": "/path/to/target/dir2",
-        "destination": "/path/to/destination/dir2"
+        "destination": "/path/to/destination/dir2",
+        "local_username": "LOCAL_USERNAME",
+        "remove_after_umount": true
     }
 ]
 """
@@ -25,7 +29,8 @@ Example configuration file in JSON format
 import sys
 import os
 import json
-import argparse 
+import argparse
+from pwd import getpwnam
 
 # functions
 def checkRoot():
@@ -83,5 +88,13 @@ for item in config:
         cmd = cmd.replace('__USERNAME__', item['username'])
         cmd = cmd.replace('__PASSWORD__', item['password'])
         cmd = cmd.replace('__HOST__', item['host'])
+    if args.action == 'mount':
+        if not os.path.isdir(item['destination']):
+            os.makedirs(item['destination'], 777)
+        user = getpwnam(item['local_username'])
+        os.chown(item['destination'], user.pw_uid, user.pw_gid)
     os.system(cmd)
+    if args.action == 'umount':
+        if item['remove_after_umount']:
+            os.rmdir(item['destination'])
 
