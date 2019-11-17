@@ -1,12 +1,20 @@
 #!/usr/bin/python3
 
 """
+Required:
+    sshfs
+
 Example configuration file in JSON format
 [
     {
+        "type": "local",        
         "target": "/path/to/target/dir1",
         "destination": "/path/to/destination/dir1"
     }, {
+        "type": "ssh",
+        "username": "USERNAME",
+        "password": "PASSWORD",
+        "host": "HOST",
         "target": "/path/to/target/dir2",
         "destination": "/path/to/destination/dir2"
     }
@@ -45,8 +53,14 @@ if not checkRoot():
 args = parseArguments();
 
 command = {
-    'mount': 'sudo mount --bind "__TARGET__" "__DESTINATION__"',
-    'unmount': 'sudo umount "__DESTINATION__"',
+    'local': {
+        'mount': 'sudo mount --bind "__TARGET__" "__DESTINATION__"',
+        'umount': 'sudo umount "__DESTINATION__"',
+    },
+    'ssh': {
+        'mount': 'echo __PASSWORD__ | sudo sshfs -o allow_other -o password_stdin __USERNAME__@__HOST__:"__DESTINATION__" "__TARGET__"',
+        'umount': 'sudo umount "__DESTINATION__"',
+    },
 }
 
 if not os.path.isfile(args.file):
@@ -61,9 +75,13 @@ if config is None:
     print("Config is none")
     sys.exit()
 
-for item in config:
-    cmd = command[args.action]
+for item in config:   
+    cmd = command[item['type']][args.action]
     cmd = cmd.replace('__TARGET__', item['target'])
     cmd = cmd.replace('__DESTINATION__', item['destination'])
+    if item['type'] == 'ssh':
+        cmd = cmd.replace('__USERNAME__', item['username'])
+        cmd = cmd.replace('__PASSWORD__', item['password'])
+        cmd = cmd.replace('__HOST__', item['host'])
     os.system(cmd)
 
