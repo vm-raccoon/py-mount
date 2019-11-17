@@ -80,7 +80,9 @@ if config is None:
     print("Config is none")
     sys.exit()
 
-for item in config:   
+for item in config:
+    if not item['type'] in command:
+        continue
     cmd = command[item['type']][args.action]
     cmd = cmd.replace('__TARGET__', item['target'])
     cmd = cmd.replace('__DESTINATION__', item['destination'])
