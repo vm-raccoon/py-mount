@@ -49,12 +49,16 @@ command = {
     'unmount': 'sudo umount "__DESTINATION__"',
 }
 
+if not os.path.isfile(args.file):
+    print("Config file not exists")
+    sys.exit()
+
 config = None
 with open(args.file) as content:
     config = json.load(content)
 
 if config is None:
-    print("Config file not exists")
+    print("Config is none")
     sys.exit()
 
 for item in config:
